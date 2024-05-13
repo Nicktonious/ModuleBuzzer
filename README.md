@@ -1,6 +1,6 @@
 <div style = "font-family: 'Open Sans', sans-serif; font-size: 16px">
 
-# ModuleServo
+# ModuleBuzzer
 
 <div style = "color: #555">
     <p align="center">
@@ -23,7 +23,7 @@
 - Включение пьезозуммера с заданной частотой;
 - Генерация различных звуковых паттернов и их проигрыш посредством выполнения тасков.
 
-Модуль разработан в соответствии с [архитектурой актуаторов](https://github.com/Konkery/ModuleActuator/blob/main/README.md), соответственно, *ClassServo* наследует и реализует является функционал *ClassMiddleActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
+Модуль разработан в соответствии с [архитектурой актуаторов](https://github.com/Konkery/ModuleActuator/blob/main/README.md), соответственно, *ClassBuzzer* наследует и реализует является функционал *ClassMiddleActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
 
 </div>
 
