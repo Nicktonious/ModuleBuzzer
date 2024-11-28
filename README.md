@@ -30,24 +30,19 @@
 ## Конструктор
 <div style = "color: #555">
 
-Для создания объекта **Buzzer** требуется указание в конфиге его метаданных, используемого пина, а так же минимальной и максимальной частоты на которой предполагается его использовать. 
+Для создания объекта **Buzzer** требуется указать в конфиге его используемый пин, а так же максимальную частоту на которой предполагается его использовать. 
 Пример конфигурации:
 ```json
-...
-"08": {
+"bz": {
     "pins": ["A3"],
     "name": "Buzzer",
-    "minFreq": 400,
     "maxFreq": 3000,
     "article": "02-501-0204-000-0001",
     "type": "actuator",
     "channelNames": ["freq"],
-    "typeInSignal": ["analog"],
     "quantityChannel": 1,
-    "busTypes": [],
-    "manufacturingData": {}
+    "modules": ["ModuleBuzzer.min.js"]
 }
-...
 ```
 
 </div>
@@ -55,15 +50,13 @@
 ### Поля
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">_MinFreq</mark> - минимальная частота звучания;
 - <mark style="background-color: lightblue">_MaxFreq</mark> - максимальная частота звучания.
 </div>
 
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">On(_chNum, _val)</mark> - запускает звучание на заданной частоте (0 ~ minFreq, 1 ~ maxFreq). При работе через канал, аргумент *_chNum* пропускается;
-- <mark style="background-color: lightblue">Off()</mark> - останавливает звучание.
+- <mark style="background-color: lightblue">SetValue(_chNum, _val)</mark> - запускает звучание на заданной частоте (0 ~ 0, 1 ~ maxFreq).
 
 </div>
 
@@ -74,11 +67,11 @@
 ```js
 //Инициализация 
 const bz = SensorManager.CreateSensor('08')[0];
-//Запуск работы зуммера с частотой 600 Гц
-bz.On(600);
+//Запуск работы зуммера с частотой 60% от maxFreq
+bz.SetValue(0.6);
 //Запуск с другой частотой через 1 сек
 setTimeout(() => { 
-    bz.On(1000);    
+    bz.SetValue(0.4);    
 }, 1500);
 //Прекращение работы
 setTimeout(() => { 
@@ -95,11 +88,11 @@ setTimeout(() => {
 //Вызов одного пика через основной, универсальный таск 
 bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 });  
 .then(
-    // Вызов пика через таск, принимающий частоту и длину импульса 
-    () => bz.RunTask('BeepOnce', 500, 800);
+    // Вызов пика через таск, принимающий в качестве аргументов k, пропорциональный частоте и длину импульса 
+    () => bz.RunTask('BeepOnce', 0.5, 800);
 ).then(
     // вызов двойного звукового сигнала
-    () => bz.RunTask('BeepTwice', 800, 500);                   
+    () => bz.RunTask('BeepTwice', 0.8, 500);                   
 ).then(
     () => { console.log('Done!'); }
 );
@@ -113,15 +106,15 @@ bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 });
 ```js
 //Объявление элементарного таска, запускающего зуммер на 3 сек
 bz.AddTask('Beep3sec', (freq) => {
-    this.On(freq);
+    this.SetValue(freq);
     setTimeout(() => {
-        this.Off();
+        this.SetValue(0);
         //Завершение выполнения таска
         this.ResolveTask(0);
     }, 3000);
 });
 
-bz.RunTask('Beep3sec', 500);
+bz.RunTask('Beep3sec', 0.5);
     .then(() => print(`Done after 3 sec!`));
 ```
 
@@ -131,7 +124,7 @@ bz.RunTask('Beep3sec', 500);
 <div style = "color: #555">
 
 ```js
-bz.RunTask('BeepTwice', 500, 1200);
+bz.RunTask('BeepTwice', 0.5, 1200);
 
 setTimeout(() => {
     bz.CancelTask();

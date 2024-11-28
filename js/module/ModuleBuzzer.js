@@ -1,3 +1,8 @@
+const ClassActuator = require('ModuleActuator.min.js');
+const proportion = (x, in_min, in_max, out_min, out_max) => {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 /**
  * @typedef TypeBuzzerStart
  * @property {Number} freq     - частота
@@ -10,50 +15,24 @@
  * Класс ClassBuzzer реализует логику работы пьезодатчика.
  */
 class ClassBuzzer extends ClassActuator {
-    /**
-     * @typedef BuzzerOptsType
-     * @property {[Pin]} pins - массив с одним пином
-     * @property {number} maxFreq - минимальная частота на которой пьезо будет издавать звук
-     * @property {number} minFreq
-     */
-    /**
-     * @constructor
-     * @param {BuzzerOptsType} _opts 
-     */
-    constructor(_opts, _actuatorProps) {
-        this.name = 'ClassBuzzer';                                  //переопределение имени класса
-        ClassActuator.apply(this, [_opts, _actuatorProps]);   //вызов родительского конструктора
-        this._MinFreq = _opts.minFreq;
-        this._MaxFreq = _opts.maxFreq;
+    constructor(_opts) {
+        this.name = 'Buzzer';                               
+        ClassActuator.call(this, _opts);   //вызов родительского конструктора
+        this._MinFreq = 0;
+        this._MaxFreq = _opts.maxFreq || 4000;
 
         if (typeof this._MaxFreq !== 'number' || 
             typeof this._MinFreq !== 'number') throw new Error('Invalid range values'); 
-
+        pinMode(this._Pins[0], 'output', true);
         this.InitTasks();
     }
-    /*******************************************CONST********************************************/
-    /**
-     * @const
-     * @type {number}
-     * Константа ERROR_CODE_ARG_VALUE определяет код ошибки, которая может произойти
-     * в случае передачи не валидных данных
-     */
-    static get ERROR_CODE_ARG_VALUE() { return 10; }
-    /**
-     * @const
-     * @type {string}
-     * Константа ERROR_MSG_ARG_VALUE определяет сообщение ошибки, которая может произойти
-     * в случае передачи не валидных данных
-     */
-    static get ERROR_MSG_ARG_VALUE() { return `ERROR>> invalid data. ClassID: ${this.name}`; }
-    /*******************************************END CONST*************************************** */
+
     /**
     * @method
     * Инициализирует стандартные таски модуля
     */
     InitTasks() {
         this._Channels[0].AddTask('PlaySound', (opts) => {
-            // console.log(this);
             //проверка и валидация аргументов 
             ['freq', 'numRep', 'pulseDur', 'prop'].forEach(property => {
                 if (typeof opts[property] !== 'number' || opts[property] < 0) throw new Error('Invalid args');
@@ -72,10 +51,10 @@ class ClassBuzzer extends ClassActuator {
                 --count;
                 if (count > 0) {
                     if (beep_flag) {
-                        this.Off();                                           //выключить звук
+                        this.SetValue(0);                                           //выключить звук
                         this._Interval = setTimeout(beep_func, Tlo);          //взвести setTimeout
                     } else {
-                        this.On(freq);                                     //включить звук
+                        this.SetValue(freq);                                     //включить звук
                         this._Interval = setTimeout(beep_func, Thi);          //взвести setTimeout
                     }
                     beep_flag = !beep_flag;
@@ -84,55 +63,61 @@ class ClassBuzzer extends ClassActuator {
                 };
             };
 
-            this.On(freq) //включить звуковой сигнал
+            this.SetValue(freq) //включить звуковой сигнал
             this._Interval = setTimeout(beep_func, Thi);
         });
 
         this._Channels[0].AddTask('BeepOnce', function(freq, dur) {
             if (!Number.isInteger(dur) || dur < 0) throw new Error('Invalid args');
 
-            this.On(freq);
+            this.SetValue(freq);
             setTimeout(() => {
-                this.Off();
+                this.SetValue(0);
                 this.ResolveTask(0);
             }, dur);
         });    
 
-        this._Channels[0].AddTask('BeepTwice', (freq, dur) => {
-            // console.log(freq, dur);
-            if (!Number.isInteger(dur) || dur < 0) throw new Error('Invalid args');
+        this._Channels[0].AddTask('BeepTwice', (_val, _dur) => {
+
+            if (!Number.isInteger(_dur) || _dur < 0) throw new Error('Invalid args');
         
-            this.On(freq);          //вкл звук 
+            this.SetValue(_val);          //вкл звук 
 
             setTimeout(() => {
-                this.Off();
-            }, dur);                //выкл звук через один полупериод
+                this.SetValue(0);
+            }, _dur);                //выкл звук через один полупериод
 
             setTimeout(() => {
-                this.On(freq);
-            }, dur*2);              //вкл звук через два полупериода
+                this.SetValue(_val);
+            }, _dur*2);              //вкл звук через два полупериода
 
             setTimeout(() => {
-                this.Off();         //выкл через 3 полупериода
-                setTimeout(() => { this.ResolveTask(0); }, dur*4);  //деактивировать таск через 2 полных периода
-            }, dur*3);
+                this.SetValue(0);         //выкл через 3 полупериода
+                setTimeout(() => { this.ResolveTask(0); }, _dur*4);  //деактивировать таск через 2 полных периода
+            }, _dur*3);
         });
     }
-    //_val - коэффициент от 0 до 1
-    On(_chNum, _val) {
+    /**
+     * @method
+     * @description Подает звуковой сигнал на частоте, пропорциональной полученному аргументу
+     * @param {number} _chNum 
+     * @param {number} _val - коэффициент от 0 до 1
+     */
+    SetValue(_chNum, _val) {
         if (typeof _val !== 'number') throw new Error();
         _val = E.clip(_val, 0, 1);
-        const proportion = (x, in_min, in_max, out_min, out_max) => {
-            return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        }
-        if (this._IsChOn[_chNum]) this.Off();
-        let freq = proportion(_val, 0, 1, this._MinFreq, this._MaxFreq);
-        analogWrite(this._Pins[0], 0.5, { freq : freq }); //включить звуковой сигнал
-    }
 
-    Off() {
-        digitalWrite(this._Pins[0], 1);
-        this._IsChOn[0] = false;
+        let freq = proportion(_val, 0, 1, this._MinFreq, this._MaxFreq);
+        
+        if (_val == 0) {
+            analogWrite(this._Pins[0], 0);
+            this._Channels[0].Status = 0;
+        } else {
+            analogWrite(this._Pins[0], 0.5, { freq : freq }); //включить звуковой сигнал
+            this._Channels[0].Status = 1;
+        }
+        
+        return true;
     }
 }
 
