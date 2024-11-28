@@ -66,16 +66,16 @@
 
 ```js
 //Инициализация 
-const bz = SensorManager.CreateSensor('08')[0];
+const bz = SensorManager.CreateSensor('bz')[0];
 //Запуск работы зуммера с частотой 60% от maxFreq
 bz.SetValue(0.6);
 //Запуск с другой частотой через 1 сек
 setTimeout(() => { 
-    bz.SetValue(0.4);    
+    bz.SetValue(0.4) 
 }, 1500);
 //Прекращение работы
 setTimeout(() => { 
-    bz.Off(); 
+    bz.SetValue(0)
 }, 3000);
 ```
 
@@ -89,10 +89,10 @@ setTimeout(() => {
 bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 });  
 .then(
     // Вызов пика через таск, принимающий в качестве аргументов k, пропорциональный частоте и длину импульса 
-    () => bz.RunTask('BeepOnce', 0.5, 800);
+    () => bz.RunTask('BeepOnce', 0.5, 800)
 ).then(
     // вызов двойного звукового сигнала
-    () => bz.RunTask('BeepTwice', 0.8, 500);                   
+    () => bz.RunTask('BeepTwice', 0.8, 500)                   
 ).then(
     () => { console.log('Done!'); }
 );
@@ -114,7 +114,7 @@ bz.AddTask('Beep3sec', (freq) => {
     }, 3000);
 });
 
-bz.RunTask('Beep3sec', 0.5);
+bz.RunTask('Beep3sec', 0.5)
     .then(() => print(`Done after 3 sec!`));
 ```
 

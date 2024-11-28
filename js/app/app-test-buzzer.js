@@ -1,12 +1,12 @@
-const err = require('https://raw.githubusercontent.com/Konkery/ModuleAppError/main/js/module/ModuleAppError.min.js');
-const NumIs = require('https://raw.githubusercontent.com/Konkery/ModuleAppMath/main/js/module/ModuleAppMath.min.js');
-     NumIs.is(); //добавить функцию проверки целочисленных чисел в Number
-
-const buzzer_class = require('https://raw.githubusercontent.com/konstantin-ki/Physics-heat-capacity/ver2/js/module/ModuleBuzzer2.min.js');
-
-try {
-    buzzer = new buzzer_class.ClassBuzzer(new buzzer_class.ClassBuzzerType(A0));
-        buzzer.PlayBeep(new buzzer_class.ClassBuzzerTypePlay(50, 3, 4000, 0.2));
-} catch(e){
-    console.log(`Error>> ${e.Message}, Code>> ${e.Code}`);
-}
+const bz = SensorManager.CreateDevice('bz')[0];
+//Вызов одного пика через основной, универсальный таск 
+bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 })
+.then(
+    // Вызов пика через таск, принимающий в качестве аргументов k, пропорциональный частоте и длину импульса 
+    () => bz.RunTask('BeepOnce', 0.5, 800)
+).then(
+    // вызов двойного звукового сигнала
+    () => bz.RunTask('BeepTwice', 0.8, 500)              
+).then(
+    () => { console.log('Done!'); }
+);
